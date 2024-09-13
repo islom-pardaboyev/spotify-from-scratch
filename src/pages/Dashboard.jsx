@@ -1,65 +1,65 @@
 import React, { useEffect, useState } from "react";
+import { Input } from "antd";
+import TopMusic from "../components/TopMusic";
+import Playback from "../components/Playback";
 import { useAuth } from "../hook/useAuth";
 import SpotifyWebApi from "spotify-web-api-node";
-import { Input } from "antd";
-import useDebounce from "../hook/useDebounce";
-import axios from "axios";
+import { CLIENT_ID } from "../hook/useEnv";
+
 function Dashboard({ code }) {
-  const accessToken = useAuth(code);
-  const spotifyApi = new SpotifyWebApi();
   const [title, setTitle] = useState("");
-  const titleDebounce = useDebounce(title, 1000);
+  const [play, setPlay] = useState(null);
+  const [playing, setPlaying] = useState(false);
+  const accessToken = useAuth(code);
+  const spotifyApi = new SpotifyWebApi({
+    clientId: CLIENT_ID,
+  });
 
   useEffect(() => {
-    if (!accessToken) return;
-    spotifyApi.setAccessToken(accessToken);
-  }, [titleDebounce]);
-
-  const [tracks, setTracks] = useState([]);
-
-  axios("https://api.spotify.com/v1/browse/categories/toplists/playlists", {
-    headers: {
-      Authorization: "Bearer " + accessToken,
+    if (accessToken) {
+      spotifyApi.setAccessToken(accessToken);
     }
-  }).then(
-    (res) => console.log(res)
-  );
-
-  useEffect(() => {
-    if (title) {
-      spotifyApi.searchTracks(titleDebounce).then((res) => {
-        console.log(res);
-
-        setTracks(
-          res.body.tracks.items.map((item) => {
-            const data = {
-              img: item.album.images[0].url,
-              artistName: item.artists[0].name,
-              trackName: item.name,
-              uri: item.uri,
-            };
-            return data;
-          })
-        );
-      });
-    }
-  }, [accessToken, titleDebounce]);
-  console.log(tracks);
+  }, [accessToken]);
 
   return (
-    <div className="p-5">
-      <Input
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        type="text"
-        size="large"
-        className="w-[400px]"
-        placeholder="Searching..."
-      />
-      {tracks.map((item, index) => (
-        <img key={index} src={item.img} alt="" />
-      ))}
-    </div>
+    <>
+      <div className="p-5">
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          type="text"
+          size="large"
+          className="w-[400px]"
+          placeholder="Searching..."
+        />
+      </div>
+      <div className="p-5 h-screen overflow-auto">
+        <TopMusic
+          setPlaying={setPlaying}
+          accessToken={accessToken}
+          setPlay={setPlay}
+          searchText={"Doston Ergashev"}
+        />
+        <TopMusic
+          setPlaying={setPlaying}
+          accessToken={accessToken}
+          setPlay={setPlay}
+          searchText={"Xamdam"}
+        />
+        <TopMusic
+          setPlaying={setPlaying}
+          accessToken={accessToken}
+          setPlay={setPlay}
+          searchText={"Ummon"}
+        />
+        <Playback
+          accessToken={accessToken}
+          playing={playing}
+          setPlaying={setPlaying}
+          play={play}
+        />
+      </div>
+    </>
   );
 }
 
